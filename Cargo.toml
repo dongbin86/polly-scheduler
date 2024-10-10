@@ -1,0 +1,39 @@
+[package]
+name = "polly-scheduler"
+version = "0.1.0"
+edition = "2021"
+
+
+[features]
+default = []
+nativedb = ["native_db", "native_model", "once_cell", "itertools", "sysinfo"]
+
+
+[dependencies]
+serde = { version = "1.0.210", features = ["derive"] }
+thiserror = "1.0.64"
+tokio = { version = "1.40.0", features = ["full"] }
+croner = "2.0.6"
+chrono = "0.4.38"
+chrono-tz = "0.10.0"
+serde_json = "1.0.128"
+ulid = "1.1.2"
+tracing = "0.1.40"
+async-trait = "0.1.83"
+tracing-subscriber = "0.3.18"
+
+native_db = { version = "0.7.0", optional = true }
+native_model = { version = "0.4.20", optional = true }
+once_cell = { version = "1.19.0", optional = true }
+itertools = { version = "0.13.0", optional = true }
+sysinfo = { version = "0.32.0", optional = true }
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+
+[[example]]
+name = "nativedb"
+path = "examples/nativedb.rs"
+required-features = ["nativedb"]
