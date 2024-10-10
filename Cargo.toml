@@ -1,6 +1,6 @@
 [package]
 name = "polly-scheduler"
-version = "0.1.0"
+version = "0.1.1"
 author = "dongbin86"
 edition = "2021"
 description = "A robust task scheduling system leveraging Tokio, with built-in fault tolerance, persistence, and recovery capabilities to ensure seamless task management and execution."
