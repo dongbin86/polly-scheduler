@@ -1,8 +1,12 @@
 [package]
 name = "polly-scheduler"
 version = "0.1.0"
+author = "dongbin86"
 edition = "2021"
-
+description = "task scheduling system built on the Tokio"
+license-file = "LICENSE"
+documentation = ""
+repository = "https://github.com/dongbin86/polly-scheduler"
 
 [features]
 default = []
