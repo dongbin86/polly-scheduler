@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use polly_cron_scheduler::{
+use polly_scheduler::{
     core::{
         context::TaskContext,
         store::TaskStore,

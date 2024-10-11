@@ -1,6 +1,6 @@
 mod cleaner;
 pub mod context;
-mod cron;
+pub mod cron;
 pub mod error;
 mod handlers;
 pub mod model;
