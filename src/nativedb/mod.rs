@@ -5,7 +5,6 @@ use native_db::*;
 use native_model::{native_model, Model};
 use once_cell::sync::{Lazy, OnceCell};
 use serde::{Deserialize, Serialize};
-use std::env;
 use tracing::error;
 
 pub mod meta;
@@ -31,7 +30,7 @@ pub fn init_nativedb(
 
     let db_file = db_path.unwrap_or_else(|| {
         std::env::temp_dir()
-            .join("cron-scheduler.db")
+            .join("polly-scheduler.db")
             .to_string_lossy()
             .into_owned()
     });
@@ -85,6 +84,23 @@ pub struct TaskMetaEntity {
     pub is_repeating: bool,  // Indicates if the task is repeating
     pub repeat_interval: u32, // Interval for repeating task
     pub heartbeat_at: i64,   // Timestamp of the last heartbeat in milliseconds
+}
+
+impl ToKey for TaskStatus {
+    fn to_key(&self) -> Key {
+        match self {
+            TaskStatus::Scheduled => Key::new(vec![0]),
+            TaskStatus::Running => Key::new(vec![1]),
+            TaskStatus::Success => Key::new(vec![2]),
+            TaskStatus::Failed => Key::new(vec![3]),
+            TaskStatus::Removed => Key::new(vec![4]),
+            TaskStatus::Stopped => Key::new(vec![5]),
+        }
+    }
+
+    fn key_names() -> Vec<String> {
+        vec!["String".to_string(), "&str".to_string()]
+    }
 }
 
 impl From<TaskMetaEntity> for TaskMeta {
@@ -149,51 +165,45 @@ impl From<TaskMeta> for TaskMetaEntity {
     }
 }
 
-impl ToKey for &TaskStatus {
-    fn to_key(&self) -> Key {
-        let status_str = match self {
-            TaskStatus::Scheduled => "scheduled",
-            TaskStatus::Running => "running",
-            TaskStatus::Success => "success",
-            TaskStatus::Failed => "failed",
-            TaskStatus::Removed => "removed",
-            TaskStatus::Stopped => "stopped",
-        };
-        Key::new(status_str.as_bytes().to_vec())
+#[cfg(test)]
+mod test {
+    use std::{fs, path::Path, time::Duration};
+
+    use crate::nativedb::{init_nativedb, TaskMetaEntity};
+    use itertools::Itertools;
+
+    fn delete_temp_db() -> Result<(), Box<dyn std::error::Error>> {
+        let temp_db_path = std::env::temp_dir().join("polly-scheduler.db");
+        if Path::new(&temp_db_path).exists() {
+            fs::remove_file(temp_db_path)?;
+            println!("File 'polly-scheduler.db' has been deleted.");
+        } else {
+            println!("File 'polly-scheduler.db' does not exist.");
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn delete_db_file() {
+        delete_temp_db().unwrap();
+        tokio::time::sleep(Duration::from_secs(3)).await;
+    }
+
+    #[tokio::test]
+    async fn test() {
+        let db = init_nativedb(None, None).unwrap();
+        let r = db.r_transaction().unwrap();
+
+        let list: Vec<TaskMetaEntity> = r
+            .scan()
+            .primary()
+            .unwrap()
+            .all()
+            .unwrap()
+            .try_collect()
+            .unwrap();
+
+        println!("{:#?}", list);
     }
 }
-// #[cfg(test)]
-// mod test {
-//     use std::{fs, path::Path, time::Duration};
-
-//     use crate::{core::entity::TaskMetaEntity, nativedb::init_nativedb};
-//     use itertools::Itertools;
-
-//     fn delete_temp_db() -> Result<(), Box<dyn std::error::Error>> {
-//         let temp_db_path = std::env::temp_dir().join("cron-scheduler.db");
-//         if Path::new(&temp_db_path).exists() {
-//             fs::remove_file(temp_db_path)?;
-//             println!("File 'cron-scheduler.db' has been deleted.");
-//         } else {
-//             println!("File 'cron-scheduler.db' does not exist.");
-//         }
-
-//         Ok(())
-//     }
-
-//     #[tokio::test]
-//     async fn delete_db_file() {
-//         delete_temp_db().unwrap();
-//         tokio::time::sleep(Duration::from_secs(3)).await;
-//     }
-
-//     #[tokio::test]
-//     async fn test() {
-//         let db = init_nativedb().unwrap();
-//         let r = db.r_transaction().unwrap();
-
-//         let list: Vec<TaskMetaEntity> = r.scan().primary().unwrap().all().try_collect().unwrap();
-
-//         println!("{:#?}", list);
-//     }
-// }

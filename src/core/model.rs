@@ -12,33 +12,33 @@ type ExponentialBase = usize;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TaskMeta {
-    pub id: String, // Unique identifier for the task
-    pub task_key: String, // Key to identify the specific task
-    pub task_params: String, // Arguments for the task, stored as a JSON object
-    pub queue_name: String, // Name of the queue for the task
-    pub updated_at: i64,     // Timestamp of the last update
-    pub status: TaskStatus, // Current status of the task
+    pub id: String,                     // Unique identifier for the task
+    pub task_key: String,               // Key to identify the specific task
+    pub task_params: String,            // Arguments for the task, stored as a JSON object
+    pub queue_name: String,             // Name of the queue for the task
+    pub updated_at: i64,                // Timestamp of the last update
+    pub status: TaskStatus,             // Current status of the task
     pub stopped_reason: Option<String>, // Optional reason for why the task was stopped
-    pub last_error: Option<String>, // Error message from the last execution, if any
-    pub last_run: i64,       // Timestamp of the last run
-    pub next_run: i64,       // Timestamp of the next scheduled run
-    pub kind: TaskKind,      // Type of the task
-    pub success_count: u32,  // Count of successful runs
-    pub failure_count: u32,  // Count of failed runs
-    pub runner_id: Option<String>, // The ID of the current task runner, may be None
-    pub retry_strategy: Retry, // Retry strategy for handling failures
-    pub retry_interval: usize, // Interval for retrying the task
-    pub base_interval: usize, // Base interval for exponential backoff
-    pub delay_seconds: u32,  //Delay before executing a Once task, specified in seconds
-    pub max_retries: Option<usize>, // Maximum number of retries allowed
-    pub cron_schedule: Option<String>, // Cron expression for scheduling
-    pub cron_timezone: Option<String>, // Timezone for the cron schedule (stored as a string)
-    pub is_repeating: bool,  // Indicates if the task is repeating
-    pub repeat_interval: u32, // Interval for repeating task
-    pub heartbeat_at: i64,   // Timestamp of the last heartbeat in milliseconds
+    pub last_error: Option<String>,     // Error message from the last execution, if any
+    pub last_run: i64,                  // Timestamp of the last run
+    pub next_run: i64,                  // Timestamp of the next scheduled run
+    pub kind: TaskKind,                 // Type of the task
+    pub success_count: u32,             // Count of successful runs
+    pub failure_count: u32,             // Count of failed runs
+    pub runner_id: Option<String>,      // The ID of the current task runner, may be None
+    pub retry_strategy: Retry,          // Retry strategy for handling failures
+    pub retry_interval: usize,          // Interval for retrying the task
+    pub base_interval: usize,           // Base interval for exponential backoff
+    pub delay_seconds: u32,             //Delay before executing a Once task, specified in seconds
+    pub max_retries: Option<usize>,     // Maximum number of retries allowed
+    pub cron_schedule: Option<String>,  // Cron expression for scheduling
+    pub cron_timezone: Option<String>,  // Timezone for the cron schedule (stored as a string)
+    pub is_repeating: bool,             // Indicates if the task is repeating
+    pub repeat_interval: u32,           // Interval for repeating task
+    pub heartbeat_at: i64,              // Timestamp of the last heartbeat in milliseconds
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Hash)]
 pub enum TaskStatus {
     // Task has been scheduled but has not started executing yet.
     Scheduled,

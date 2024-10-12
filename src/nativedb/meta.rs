@@ -37,11 +37,17 @@ pub struct NativeDbTaskStore {
 
 impl Default for NativeDbTaskStore {
     fn default() -> Self {
+        NativeDbTaskStore::new(None, None)
+    }
+}
+
+impl NativeDbTaskStore {
+    pub fn new(db_path: Option<String>, cache_size: Option<u64>) -> Self {
         let store = if let Ok(database) = get_database() {
             Arc::new(database)
         } else {
-            let database =
-                init_nativedb(None, None).expect("Failed to initialize the native database.");
+            let database = init_nativedb(db_path, cache_size)
+                .expect("Failed to initialize the native database.");
             Arc::new(database)
         };
         Self { store }
@@ -60,7 +66,8 @@ impl TaskStore for NativeDbTaskStore {
 
     async fn restore_tasks(&self) -> Result<(), Self::Error> {
         let rw = handle_error(self.store.rw_transaction())?;
-        let entities: Vec<TaskMetaEntity> = handle_error(rw.scan().primary()?.all().try_collect())?;
+        let entities: Vec<TaskMetaEntity> =
+            handle_error(rw.scan().primary()?.all()?.try_collect())?;
 
         // Exclude stopped and Removed tasks
         let targets: Vec<TaskMetaEntity> = entities
@@ -132,7 +139,7 @@ impl TaskStore for NativeDbTaskStore {
 
     async fn list(&self) -> Result<Vec<TaskMeta>, Self::Error> {
         let r = handle_error(self.store.r_transaction())?;
-        let list: Vec<TaskMetaEntity> = handle_error(r.scan().primary()?.all().try_collect())?;
+        let list: Vec<TaskMetaEntity> = handle_error(r.scan().primary()?.all()?.try_collect())?;
         Ok(list.into_iter().map(|e| e.into()).collect())
     }
 
@@ -153,7 +160,7 @@ impl TaskStore for NativeDbTaskStore {
         let entities: Vec<TaskMetaEntity> = handle_error(
             rw.scan()
                 .secondary(TaskMetaEntityKey::queue_name)?
-                .start_with(queue)
+                .start_with(queue)?
                 .try_collect(),
         )?;
 
@@ -271,7 +278,7 @@ impl TaskStore for NativeDbTaskStore {
         let entities: Vec<TaskMetaEntity> = handle_error(
             rw.scan()
                 .secondary(TaskMetaEntityKey::status)?
-                .start_with(TaskStatus::Removed.to_string().as_str())
+                .start_with(TaskStatus::Removed.to_string().as_str())?
                 .try_collect(),
         )?;
         for entity in entities {
