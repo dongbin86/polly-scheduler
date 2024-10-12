@@ -1,7 +1,8 @@
 use crate::core::error::BoxError;
 use std::{future::Future, sync::Arc, time::Duration};
 use tokio::signal;
-use tokio::{sync::Notify, time::sleep};
+use tokio::sync::RwLock;
+use tokio::time::sleep;
 use tracing::{error, info, warn};
 
 #[derive(Default)]
@@ -9,7 +10,7 @@ pub struct PeriodicTask {
     // Name of the periodic task.
     name: String,
     // A notification mechanism for shutdown signaling.
-    shutdown: Arc<Notify>,
+    shutdown: Arc<RwLock<bool>>,
 }
 
 impl PeriodicTask {
@@ -25,15 +26,16 @@ impl PeriodicTask {
     pub fn new(name: &str) -> Self {
         Self {
             name: name.to_owned(),
-            shutdown: Arc::new(Notify::new()),
+            shutdown: Arc::new(RwLock::new(false)),
         }
     }
 
     /// Sends a shutdown signal to the task.
     ///
     /// This method notifies the task to stop executing.
-    pub fn shutdown(self: Arc<Self>) {
-        self.shutdown.notify_one();
+    pub async fn shutdown(self: Arc<Self>) {
+        let mut triggered = self.shutdown.write().await; // Acquire write lock to set shutdown state
+        *triggered = true; // Set the shutdown state to true
     }
 
     /// Starts the periodic task and sets up a signal handler for shutdown.
@@ -75,7 +77,7 @@ impl PeriodicTask {
                         &self.name
                     );
                     // Notify the task to shut down.
-                    signal_clone.shutdown();
+                    signal_clone.shutdown().await;
                 }
                 Err(err) => {
                     error!(
@@ -107,37 +109,36 @@ impl PeriodicTask {
     {
         info!("Periodic task '{}' started", &self.name);
         loop {
-            tokio::select! {
-                // Wait for a shutdown notification.
-                _ = self.shutdown.notified() => {
-                    info!("Received shutdown signal, stopping periodic task '{}'.", &self.name);
-                    break; // Exit the loop to stop the task.
-                }
-                // Wait for the specified interval to elapse.
-                _ = sleep(interval) => {
-                    // Clone the task to execute it.
-                    let task_clone = Arc::clone(&task);
-                    let task_future = tokio::spawn(async move {
-                        task_clone().await // Execute the task.
-                    });
+            // Check if shutdown is triggered
+            let triggered = self.shutdown.read().await;
+            if *triggered {
+                break; // Exit loop if shutdown is triggered
+            }
 
-                    // Handle the result of the task execution.
-                    match task_future.await {
-                        Ok(Ok(_)) => {
-                            info!("Periodic task '{}' completed successfully.", &self.name);
-                        }
-                        Ok(Err(e)) => {
-                            warn!("Periodic task '{}' failed: {:?}", &self.name, e);
-                        }
-                        Err(e) if e.is_panic() => {
-                            error!("Fatal: Periodic task '{}' encountered a panic.", &self.name);
-                        }
-                        Err(e) => {
-                            error!("Periodic task '{}' failed unexpectedly: {:?}", &self.name, e);
-                        }
-                    }
+            let task_clone = Arc::clone(&task);
+            let task_future = tokio::spawn(async move {
+                task_clone().await // Execute the task.
+            });
+
+            // Handle the result of the task execution.
+            match task_future.await {
+                Ok(Ok(_)) => {
+                    info!("Periodic task '{}' completed successfully.", &self.name);
+                }
+                Ok(Err(e)) => {
+                    warn!("Periodic task '{}' failed: {:?}", &self.name, e);
+                }
+                Err(e) if e.is_panic() => {
+                    error!("Fatal: Periodic task '{}' encountered a panic.", &self.name);
+                }
+                Err(e) => {
+                    error!(
+                        "Periodic task '{}' failed unexpectedly: {:?}",
+                        &self.name, e
+                    );
                 }
             }
+            sleep(interval).await;
         }
         info!("Periodic task '{}' stopped", &self.name);
     }

@@ -20,6 +20,12 @@ pub(crate) async fn process_task_worker<T>(
     // Generate a unique identifier for the worker
     let worker_id = generate_token!();
     loop {
+        // Check if shutdown is triggered
+        let triggered = shutdown.read().await;
+        if *triggered {
+            break; // Exit loop if shutdown is triggered
+        }
+
         // Fetch and execute a task from the task store
         let fetch =
             fetch_and_execute_task(queue_name, &worker_id, handlers.clone(), task_store.clone())
@@ -48,12 +54,6 @@ pub(crate) async fn process_task_worker<T>(
                 tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
                 // Sleep for 1 second
             }
-        }
-
-        // Check if shutdown is triggered
-        let shutdown_triggered = shutdown.read().await;
-        if *shutdown_triggered {
-            break; // Exit loop if shutdown is triggered
         }
     }
     tracing::warn!("Task worker='{worker_id}' is closed"); // Log that the worker has closed
@@ -106,7 +106,7 @@ async fn calculate_next_run(task: &TaskMeta) -> Option<i64> {
                 next_run(cron_schedule, cron_timezone, task.next_run)
             } else {
                 None // Return None if schedule or timezone is not defined
-            }   
+            }
         }
         _ => None, // No next run time for one-time tasks
     }
@@ -137,10 +137,7 @@ where
     Ok(()) // Return Ok if successful
 }
 
-async fn handle_task_result(
-    result: TaskResult,
-    task: &TaskMeta,
-) -> (Option<String>, Option<i64>) {
+async fn handle_task_result(result: TaskResult, task: &TaskMeta) -> (Option<String>, Option<i64>) {
     // Handle the result of task execution to determine next run time and error status
     match result {
         TaskResult { result: Ok(()), .. } => {
