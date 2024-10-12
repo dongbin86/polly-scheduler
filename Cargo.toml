@@ -1,11 +1,11 @@
 [package]
 name = "polly-scheduler"
-version = "0.1.3"
+version = "0.1.4"
 author = "dongbin86"
 edition = "2021"
 description = "A robust task scheduling system leveraging Tokio, with built-in fault tolerance, persistence, and recovery capabilities to ensure seamless task management and execution."
 license-file = "LICENSE"
-documentation = "https://docs.rs/polly-scheduler/0.1.3/"
+documentation = "https://docs.rs/polly-scheduler/0.1.4/"
 repository = "https://github.com/dongbin86/polly-scheduler"
 
 [features]

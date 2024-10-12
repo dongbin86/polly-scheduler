@@ -20,13 +20,17 @@ pub static MODELS: Lazy<Models> = Lazy::new(|| {
     models
 });
 
-pub fn init_nativedb() -> Result<&'static Database<'static>, SchedulerError> {
+pub fn init_nativedb(
+    db_path: Option<String>,
+    cache_size: Option<u64>,
+) -> Result<&'static Database<'static>, SchedulerError> {
     let mut sys = sysinfo::System::new_all();
     sys.refresh_memory();
-    let cache_size = sys.free_memory() / 2;
 
-    let db_file = std::env::var("CRON_SCHEDULER_NATIVE_DB_PATH").unwrap_or_else(|_| {
-        env::temp_dir()
+    let cache_size = cache_size.unwrap_or_else(|| sys.free_memory() / 2);
+
+    let db_file = db_path.unwrap_or_else(|| {
+        std::env::temp_dir()
             .join("cron-scheduler.db")
             .to_string_lossy()
             .into_owned()

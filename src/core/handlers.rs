@@ -1,5 +1,5 @@
-use crate::core::model::TaskMeta;
 use crate::core::error::SchedulerError;
+use crate::core::model::TaskMeta;
 use crate::core::result::TaskResult;
 use crate::core::task::Task;
 use std::time::{Duration, Instant};
@@ -139,30 +139,30 @@ async fn execute(handler: Handler, task_meta: Arc<TaskMeta>) -> TaskResult {
 
     // Spawn a new asynchronous task to execute the handler.
     let task_future = tokio::spawn(async move { (handler)(task_params).await });
-
+    let task_id = task_meta.id.clone();
     match task_future.await {
         Ok(Ok(_)) => {
             let duration = start.elapsed(); // Calculate the duration of the task execution.
             info!(
-                "Task '{task_name}' in queue '{task_queue}' executed successfully, took {:?}",
+                "Task '{{{task_name}-{task_id}}}' in queue '{task_queue}' executed successfully, took {:?}",
                 duration
             );
             TaskResult::success(task_meta.id.clone()) // Return success result.
         }
         Ok(Err(e)) => {
-            warn!("Task '{task_name}' in queue '{task_queue}' errored");
+            warn!("Task '{{{task_name}-{task_id}}}' in queue '{task_queue}' errored");
             TaskResult::failure(task_meta.id.clone(), e) // Return failure result with the error.
         }
         Err(e) if e.is_panic() => {
-            warn!("Task '{task_name}' in queue '{task_queue}' panicked");
+            warn!("Task '{{{task_name}-{task_id}}}' in queue '{task_queue}' panicked");
             TaskResult::failure(task_meta.id.clone(), SchedulerError::panic()) // Handle panic case.
         }
         Err(e) => {
             println!(
-                "Task '{task_name}' in queue '{task_queue}' failed unexpectedly: {:?}",
+                "Task '{{{task_name}}}' in queue '{task_queue}' failed unexpectedly: {:?}",
                 e
             );
-            TaskResult::failure(task_meta.id.clone(), SchedulerError::unexpect(e))
+            TaskResult::failure(task_id, SchedulerError::unexpect(e))
             // Handle unexpected failure.
         }
     }

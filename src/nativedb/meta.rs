@@ -40,7 +40,8 @@ impl Default for NativeDbTaskStore {
         let store = if let Ok(database) = get_database() {
             Arc::new(database)
         } else {
-            let database = init_nativedb().expect("Failed to initialize the native database.");
+            let database =
+                init_nativedb(None, None).expect("Failed to initialize the native database.");
             Arc::new(database)
         };
         Self { store }
