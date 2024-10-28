@@ -12,3 +12,13 @@ pub enum TaskKind {
     /// Represents a one-time job that runs once and then completes.
     Once,
 }
+
+impl std::fmt::Display for TaskKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TaskKind::Cron => write!(f, "Cron"),
+            TaskKind::Repeat => write!(f, "Repeat"),
+            TaskKind::Once => write!(f, "Once"),
+        }
+    }
+}

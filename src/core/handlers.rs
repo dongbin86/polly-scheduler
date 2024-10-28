@@ -150,7 +150,7 @@ async fn execute(handler: Handler, task_meta: Arc<TaskMeta>) -> TaskResult {
             TaskResult::success(task_meta.id.clone()) // Return success result.
         }
         Ok(Err(e)) => {
-            warn!("Task '{{{task_name}-{task_id}}}' in queue '{task_queue}' errored");
+            warn!("Task '{{{task_name}-{task_id}}}' in queue '{task_queue}' errored, {e:#?}");
             TaskResult::failure(task_meta.id.clone(), e) // Return failure result with the error.
         }
         Err(e) if e.is_panic() => {

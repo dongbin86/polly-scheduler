@@ -7,8 +7,8 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use std::fmt;
-type LinearInterval = usize;
-type ExponentialBase = usize;
+type LinearInterval = u32;
+type ExponentialBase = u32;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TaskMeta {
@@ -27,10 +27,10 @@ pub struct TaskMeta {
     pub failure_count: u32,             // Count of failed runs
     pub runner_id: Option<String>,      // The ID of the current task runner, may be None
     pub retry_strategy: Retry,          // Retry strategy for handling failures
-    pub retry_interval: usize,          // Interval for retrying the task
-    pub base_interval: usize,           // Base interval for exponential backoff
+    pub retry_interval: u32,            // Interval for retrying the task
+    pub base_interval: u32,             // Base interval for exponential backoff
     pub delay_seconds: u32,             //Delay before executing a Once task, specified in seconds
-    pub max_retries: Option<usize>,     // Maximum number of retries allowed
+    pub max_retries: Option<u32>,       // Maximum number of retries allowed
     pub cron_schedule: Option<String>,  // Cron expression for scheduling
     pub cron_timezone: Option<String>,  // Timezone for the cron schedule (stored as a string)
     pub is_repeating: bool,             // Indicates if the task is repeating
@@ -77,6 +77,15 @@ impl fmt::Display for TaskStatus {
 pub enum Retry {
     Linear,
     Exponential,
+}
+
+impl fmt::Display for Retry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Retry::Linear => write!(f, "Linear"),
+            Retry::Exponential => write!(f, "Exponential"),
+        }
+    }
 }
 
 fn to_retry(retry_policy: RetryPolicy) -> (Retry, LinearInterval, ExponentialBase) {

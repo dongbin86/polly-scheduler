@@ -26,7 +26,7 @@ pub fn init_nativedb(
     let mut sys = sysinfo::System::new_all();
     sys.refresh_memory();
 
-    let cache_size = cache_size.unwrap_or_else(|| sys.free_memory() / 2);
+    let cache_size = cache_size.unwrap_or_else(|| sys.free_memory() / 4);
 
     let db_file = db_path.unwrap_or_else(|| {
         std::env::temp_dir()
@@ -75,10 +75,10 @@ pub struct TaskMetaEntity {
     pub failure_count: u32,  // Count of failed runs
     pub runner_id: Option<String>, // The ID of the current task runner, may be None
     pub retry_strategy: Retry, // Retry strategy for handling failures
-    pub retry_interval: usize, // Interval for retrying the task
-    pub base_interval: usize, // Base interval for exponential backoff
+    pub retry_interval: u32, // Interval for retrying the task
+    pub base_interval: u32, // Base interval for exponential backoff
     pub delay_seconds: u32,  //Delay before executing a Once task, specified in seconds
-    pub max_retries: Option<usize>, // Maximum number of retries allowed
+    pub max_retries: Option<u32>, // Maximum number of retries allowed
     pub cron_schedule: Option<String>, // Cron expression for scheduling
     pub cron_timezone: Option<String>, // Timezone for the cron schedule (stored as a string)
     pub is_repeating: bool,  // Indicates if the task is repeating

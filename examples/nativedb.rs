@@ -11,7 +11,7 @@ use polly_scheduler::{
 };
 use serde::{Deserialize, Serialize};
 
-#[tokio::main] 
+#[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
@@ -22,6 +22,7 @@ async fn main() {
     let context = TaskContext::new(task_store)
         .register::<MyTask1>()
         .register::<MyTask2>()
+        .set_concurrency("default", 10)
         .start();
 
     context
