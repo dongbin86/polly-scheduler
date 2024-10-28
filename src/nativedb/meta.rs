@@ -162,7 +162,6 @@ impl TaskStore for NativeDbTaskStore {
         queue: &str,
         runner_id: &str,
     ) -> Result<Option<TaskMeta>, Self::Error> {
-        println!("开始拉起任务....");
         let rw = handle_error(self.store.rw_transaction())?;
         let entities: Vec<TaskMetaEntity> = handle_error(
             rw.scan()
