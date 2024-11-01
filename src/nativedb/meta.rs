@@ -52,6 +52,12 @@ impl NativeDbTaskStore {
         };
         Self { store }
     }
+
+    pub fn init(database: &'static Database<'static>) -> Self {
+        Self {
+            store: Arc::new(database),
+        }
+    }
 }
 
 fn handle_error<T>(
